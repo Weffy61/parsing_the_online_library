@@ -1,26 +1,13 @@
 import requests
 import os
 from bs4 import BeautifulSoup
+from pathvalidate import sanitize_filename
 
 
-def get_book(book_id):
-    url = f"https://tululu.org/b{book_id + 1}/"
+def check_url_exist(url):
     response = requests.get(url, allow_redirects=True)
     response.raise_for_status()
     return response
-
-
-def download_book(book_id):
-    payload = {
-        'id': book_id + 1
-    }
-
-    url = "https://tululu.org/txt.php"
-    response = requests.get(url, params=payload)
-    response.raise_for_status()
-    file_name = f'id_{book_id + 1}.txt'
-    with open(f'books/{file_name}', 'wb') as file:
-        file.write(response.content)
 
 
 def check_for_redirect(response):
@@ -30,21 +17,37 @@ def check_for_redirect(response):
 
 def parse_book(response):
     soup = BeautifulSoup(response.text, 'lxml')
-    title, author = soup.find('h1').text.split('::')
-    print(f'Заголовок: {title.strip()}')
-    print(f'Автор: {author.strip()}')
+    title = soup.find('h1').text.split('::')[0].strip()
+    return title
+
+
+def download_txt(url, filename, folder='books/'):
+    os.makedirs(folder, exist_ok=True)
+    response = requests.get(url)
+    response.raise_for_status()
+    normalized_filename = f'{sanitize_filename(filename)}.txt'
+    path = os.path.join(folder, normalized_filename)
+    with open(path, 'wb') as file:
+        file.write(response.content)
+    return path
 
 
 def main():
     DIR_NAME = 'books'
     os.makedirs(DIR_NAME, exist_ok=True)
-    for book_num in range(1):
+    for book_num in range(10):
         try:
-            response = get_book(book_num)
-            check_for_redirect(response)
-            parse_book(response)
-            # download_book(book_num)
+            book_url = f"https://tululu.org/b{book_num + 1}/"
+            txt_url = f'https://tululu.org/txt.php?id={book_num + 1}'
+            response_book = check_url_exist(book_url)
+            check_for_redirect(response_book)
+            book_title = parse_book(response_book)
+            response_txt = check_url_exist(txt_url)
+            check_for_redirect(response_txt)
+            filename = f'{book_num + 1}. {book_title}'
+            download_txt(txt_url, filename)
         except requests.exceptions.HTTPError as ex:
+            # print(f'Книга с id {book_num + 1} недоступна, так как {ex}')
             print(f'Книга с id {book_num + 1} недоступна, так как {ex}')
             continue
 
