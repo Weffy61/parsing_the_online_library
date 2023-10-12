@@ -2,6 +2,8 @@ import requests
 import os
 from bs4 import BeautifulSoup
 from pathvalidate import sanitize_filename
+from urllib.parse import urljoin
+from urllib.parse import unquote, urlsplit
 
 
 def check_url_exist(url):
@@ -21,6 +23,13 @@ def parse_book(response):
     return title
 
 
+def parse_image_url(response):
+    soup = BeautifulSoup(response.text, 'lxml')
+    relative_path = soup.find(class_='bookimage').find('img')['src']
+    path = urljoin('https://tululu.org', relative_path)
+    return path
+
+
 def download_txt(url, filename, folder='books/'):
     os.makedirs(folder, exist_ok=True)
     response = requests.get(url)
@@ -32,9 +41,19 @@ def download_txt(url, filename, folder='books/'):
     return path
 
 
+def download_image(url, folder='images/'):
+    os.makedirs(folder, exist_ok=True)
+    response = requests.get(url)
+    response.raise_for_status()
+    filename = unquote(urlsplit(url).path).split('/')[-1]
+    normalized_filename = f'{sanitize_filename(filename)}'
+    path = os.path.join(folder, normalized_filename)
+    with open(path, 'wb') as file:
+        file.write(response.content)
+
+
 def main():
-    DIR_NAME = 'books'
-    os.makedirs(DIR_NAME, exist_ok=True)
+    os.makedirs('books', exist_ok=True)
     for book_num in range(10):
         try:
             book_url = f"https://tululu.org/b{book_num + 1}/"
@@ -46,6 +65,8 @@ def main():
             check_for_redirect(response_txt)
             filename = f'{book_num + 1}. {book_title}'
             download_txt(txt_url, filename)
+            image_url = parse_image_url(response_book)
+            download_image(image_url)
         except requests.exceptions.HTTPError as ex:
             print(f'Книга с id {book_num + 1} недоступна, так как {ex}')
             continue
