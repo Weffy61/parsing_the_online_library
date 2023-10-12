@@ -47,7 +47,6 @@ def main():
             filename = f'{book_num + 1}. {book_title}'
             download_txt(txt_url, filename)
         except requests.exceptions.HTTPError as ex:
-            # print(f'Книга с id {book_num + 1} недоступна, так как {ex}')
             print(f'Книга с id {book_num + 1} недоступна, так как {ex}')
             continue
 
