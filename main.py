@@ -71,9 +71,9 @@ def download_comments(response, book_id, folder='comments/'):
     comments = soup.find_all(class_='texts')
     path = os.path.join(folder, f'{book_id}.txt')
     for comment in comments:
-        new_comment = f"{comment.find(class_='black').text}\n"
+        book_comment = f"{comment.find(class_='black').text}\n"
         with open(path, 'a') as file:
-            file.write(new_comment)
+            file.write(book_comment)
 
 
 def main():
