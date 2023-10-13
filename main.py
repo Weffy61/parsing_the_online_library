@@ -17,32 +17,6 @@ def check_for_redirect(response):
         raise requests.HTTPError('выполнена переадресация со страницы книги')
 
 
-def parse_book(response):
-    soup = BeautifulSoup(response.text, 'lxml')
-    title = soup.find('h1').text.split('::')[0].strip()
-    return title
-
-
-def parse_image_url(response):
-    soup = BeautifulSoup(response.text, 'lxml')
-    relative_path = soup.find(class_='bookimage').find('img')['src']
-    path = urljoin('https://tululu.org', relative_path)
-    return path
-
-
-def parse_book_genre(response):
-    soup = BeautifulSoup(response.text, 'lxml')
-    book_genres = []
-    genres = soup.find(id='content').find('span', class_='d_book').find_all('a')
-    for genre in genres:
-        book_genres.append(genre.text)
-    return book_genres
-
-
-def parse_book_page(response):
-    pass
-
-
 def download_book(url, filename, folder='books/'):
     os.makedirs(folder, exist_ok=True)
     response = requests.get(url)
@@ -65,9 +39,8 @@ def download_image(url, folder='images/'):
         file.write(response.content)
 
 
-def download_comments(response, book_id, folder='comments/'):
+def download_comments(soup, book_id, folder='comments/'):
     os.makedirs(folder, exist_ok=True)
-    soup = BeautifulSoup(response.text, 'lxml')
     comments = soup.find_all(class_='texts')
     path = os.path.join(folder, f'{book_id}.txt')
     for comment in comments:
@@ -76,25 +49,56 @@ def download_comments(response, book_id, folder='comments/'):
             file.write(book_comment)
 
 
+def parse_book_genre(response):
+    soup = BeautifulSoup(response.text, 'lxml')
+    book_genres = []
+    genres = soup.find(id='content').find('span', class_='d_book').find_all('a')
+    for genre in genres:
+        book_genres.append(genre.text)
+    return book_genres
+
+
+def parse_book_page(soup, book_id):
+    title, author = soup.find('h1').text.split('::')
+    img_relative_path = soup.find(class_='bookimage').find('img')['src']
+    image_url = urljoin('https://tululu.org', img_relative_path)
+    genres = [genre.text for genre in soup.find(id='content').find('span', class_='d_book').find_all('a')]
+    filename = f'{book_id + 1}. {title.strip()}'
+
+    book = {
+        'title': title.strip(),
+        'author': author.strip(),
+        'image_url': image_url,
+        'genres': genres,
+        'filename': filename
+    }
+    return book
+
+
+def get_book(book_id):
+    book_url = f"https://tululu.org/b{book_id + 1}/"
+    response = check_url_exist(book_url)
+    check_for_redirect(response)
+    download_url = f'https://tululu.org/txt.php?id={book_id + 1}'
+    response_txt = check_url_exist(download_url)
+    check_for_redirect(response_txt)
+    soup = BeautifulSoup(response.text, 'lxml')
+    return soup, download_url
+
+
 def main():
     os.makedirs('books', exist_ok=True)
     for book_num in range(10):
         try:
-            book_url = f"https://tululu.org/b{book_num + 1}/"
-            txt_url = f'https://tululu.org/txt.php?id={book_num + 1}'
-            response_book = check_url_exist(book_url)
-            check_for_redirect(response_book)
-            book_title = parse_book(response_book)
-            response_txt = check_url_exist(txt_url)
-            check_for_redirect(response_txt)
-            filename = f'{book_num + 1}. {book_title}'
-            download_book(txt_url, filename)
-            image_url = parse_image_url(response_book)
+            soup, download_url = get_book(book_num)
+            book = parse_book_page(soup, book_num)
+            filename = book['filename']
+            image_url = book['image_url']
+            download_book(download_url, filename)
             download_image(image_url)
-            download_comments(response_book, book_num)
-            book_genres = parse_book_genre(response_book)
+            download_comments(soup, book_num)
 
-        except requests.exceptions.HTTPError as ex:
+        except (requests.exceptions.HTTPError, requests.exceptions.MissingSchema) as ex:
             print(f'Книга с id {book_num + 1} недоступна, так как {ex}')
             continue
 
