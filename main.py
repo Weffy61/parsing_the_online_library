@@ -39,6 +39,12 @@ def parse_comments(response):
     return comments
 
 
+def parse_book_genre(response):
+    soup = BeautifulSoup(response.text, 'lxml')
+    book_genre = soup.find(id='content').find('span', class_='d_book').find('a')
+    return book_genre.text
+
+
 def download_txt(url, filename, folder='books/'):
     os.makedirs(folder, exist_ok=True)
     response = requests.get(url)
@@ -77,6 +83,7 @@ def main():
             image_url = parse_image_url(response_book)
             download_image(image_url)
             comments = parse_comments(response_book)
+            book_genre = parse_book_genre(response_book)
 
         except requests.exceptions.HTTPError as ex:
             print(f'Книга с id {book_num + 1} недоступна, так как {ex}')
