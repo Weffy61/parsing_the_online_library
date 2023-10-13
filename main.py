@@ -32,11 +32,11 @@ def parse_image_url(response):
 
 def parse_comments(response):
     soup = BeautifulSoup(response.text, 'lxml')
-    user_comments = soup.find_all(class_='texts')
-    comments = []
-    for comment in user_comments:
-        comments.append(comment.find(class_='black').text)
-    return comments
+    comments = soup.find_all(class_='texts')
+    book_comments = []
+    for comment in comments:
+        book_comments.append(comment.find(class_='black').text)
+    return book_comments
 
 
 def parse_book_genre(response):
