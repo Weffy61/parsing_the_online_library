@@ -30,15 +30,6 @@ def parse_image_url(response):
     return path
 
 
-def parse_comments(response):
-    soup = BeautifulSoup(response.text, 'lxml')
-    comments = soup.find_all(class_='texts')
-    book_comments = []
-    for comment in comments:
-        book_comments.append(comment.find(class_='black').text)
-    return book_comments
-
-
 def parse_book_genre(response):
     soup = BeautifulSoup(response.text, 'lxml')
     book_genres = []
@@ -46,6 +37,10 @@ def parse_book_genre(response):
     for genre in genres:
         book_genres.append(genre.text)
     return book_genres
+
+
+def parse_book_page(response):
+    pass
 
 
 def download_txt(url, filename, folder='books/'):
@@ -70,6 +65,17 @@ def download_image(url, folder='images/'):
         file.write(response.content)
 
 
+def download_comments(response, book_id, folder='comments/'):
+    os.makedirs(folder, exist_ok=True)
+    soup = BeautifulSoup(response.text, 'lxml')
+    comments = soup.find_all(class_='texts')
+    path = os.path.join(folder, f'{book_id}.txt')
+    for comment in comments:
+        new_comment = f"{comment.find(class_='black').text}\n"
+        with open(path, 'a') as file:
+            file.write(new_comment)
+
+
 def main():
     os.makedirs('books', exist_ok=True)
     for book_num in range(10):
@@ -81,11 +87,11 @@ def main():
             book_title = parse_book(response_book)
             response_txt = check_url_exist(txt_url)
             check_for_redirect(response_txt)
-            filename = f'{book_num + 1}. {book_title}'
-            download_txt(txt_url, filename)
-            image_url = parse_image_url(response_book)
-            download_image(image_url)
-            comments = parse_comments(response_book)
+            # filename = f'{book_num + 1}. {book_title}'
+            # download_txt(txt_url, filename)
+            # image_url = parse_image_url(response_book)
+            # download_image(image_url)
+            download_comments(response_book, book_num)
             book_genres = parse_book_genre(response_book)
 
         except requests.exceptions.HTTPError as ex:
