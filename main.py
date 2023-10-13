@@ -99,7 +99,7 @@ def parse_book_id():
 
 def main():
     start_id, end_id = parse_book_id()
-    for book_num in range(start_id - 1, end_id - 1):
+    for book_num in range(start_id - 1, end_id):
         try:
             soup, download_url = get_book(book_num)
             book = parse_book_page(soup, book_num)
