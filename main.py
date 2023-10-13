@@ -43,7 +43,7 @@ def parse_book_page(response):
     pass
 
 
-def download_txt(url, filename, folder='books/'):
+def download_book(url, filename, folder='books/'):
     os.makedirs(folder, exist_ok=True)
     response = requests.get(url)
     response.raise_for_status()
@@ -87,10 +87,10 @@ def main():
             book_title = parse_book(response_book)
             response_txt = check_url_exist(txt_url)
             check_for_redirect(response_txt)
-            # filename = f'{book_num + 1}. {book_title}'
-            # download_txt(txt_url, filename)
-            # image_url = parse_image_url(response_book)
-            # download_image(image_url)
+            filename = f'{book_num + 1}. {book_title}'
+            download_book(txt_url, filename)
+            image_url = parse_image_url(response_book)
+            download_image(image_url)
             download_comments(response_book, book_num)
             book_genres = parse_book_genre(response_book)
 
