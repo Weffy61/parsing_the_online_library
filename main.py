@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 from pathvalidate import sanitize_filename
 from urllib.parse import urljoin
 from urllib.parse import unquote, urlsplit
+import argparse
 
 
 def check_url_exist(url):
@@ -86,9 +87,19 @@ def get_book(book_id):
     return soup, download_url
 
 
+def parse_book_id():
+    parser_book_id = argparse.ArgumentParser(
+        description='Загрузка книги в указанном диапазоне'
+    )
+    parser_book_id.add_argument('start_id', help='ID начальной книги', type=int, nargs='?', default=1)
+    parser_book_id.add_argument('end_id', help='ID конечной книги', type=int, nargs='?', default=10)
+    book_args = parser_book_id.parse_args()
+    return book_args.start_id, book_args.end_id
+
+
 def main():
-    os.makedirs('books', exist_ok=True)
-    for book_num in range(10):
+    start_id, end_id = parse_book_id()
+    for book_num in range(start_id - 1, end_id - 1):
         try:
             soup, download_url = get_book(book_num)
             book = parse_book_page(soup, book_num)
@@ -97,6 +108,8 @@ def main():
             download_book(download_url, filename)
             download_image(image_url)
             download_comments(soup, book_num)
+            print(f'Название: {book["title"]}')
+            print(f'Автор: {book["author"]}')
 
         except (requests.exceptions.HTTPError, requests.exceptions.MissingSchema) as ex:
             print(f'Книга с id {book_num + 1} недоступна, так как {ex}')
