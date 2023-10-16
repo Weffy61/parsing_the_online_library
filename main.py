@@ -87,7 +87,7 @@ def get_book(book_id):
     return soup, download_url
 
 
-def parse_book_id():
+def parse_book_ids():
     parser_book_id = argparse.ArgumentParser(
         description='Загрузка книги в указанном диапазоне'
     )
@@ -98,7 +98,7 @@ def parse_book_id():
 
 
 def main():
-    start_id, end_id = parse_book_id()
+    start_id, end_id = parse_book_ids()
     for book_num in range(start_id - 1, end_id):
         try:
             soup, download_url = get_book(book_num)
