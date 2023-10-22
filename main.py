@@ -7,7 +7,7 @@ from urllib.parse import unquote, urlsplit
 import argparse
 
 
-def check_url_exist(url):
+def get_response(url):
     response = requests.get(url, allow_redirects=True)
     response.raise_for_status()
     return response
@@ -78,10 +78,10 @@ def parse_book_page(soup, book_id):
 
 def get_book(book_id):
     book_url = f"https://tululu.org/b{book_id + 1}/"
-    response = check_url_exist(book_url)
+    response = get_response(book_url)
     check_for_redirect(response)
     download_url = f'https://tululu.org/txt.php?id={book_id + 1}'
-    response_txt = check_url_exist(download_url)
+    response_txt = get_response(download_url)
     check_for_redirect(response_txt)
     soup = BeautifulSoup(response.text, 'lxml')
     return soup, download_url
