@@ -23,11 +23,10 @@ def download_book(book_id, filename, folder='books/'):
         'id': book_id
     }
     download_url = f'https://tululu.org/txt.php'
-    response_txt = get_response(download_url, payload=payload)
-    check_for_redirect(response_txt)
-    os.makedirs(folder, exist_ok=True)
-    response = requests.get(download_url, params=payload)
+    response = get_response(download_url, payload=payload)
     response.raise_for_status()
+    check_for_redirect(response)
+    os.makedirs(folder, exist_ok=True)
     normalized_filename = f'{sanitize_filename(filename)}.txt'
     path = os.path.join(folder, normalized_filename)
     with open(path, 'wb') as file:
