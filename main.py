@@ -64,10 +64,10 @@ def parse_book_genre(response):
     return book_genres
 
 
-def parse_book_page(soup, book_id):
+def parse_book_page(soup, book_id, book_url):
     title, author = soup.find('h1').text.split('::')
     img_relative_path = soup.find(class_='bookimage').find('img')['src']
-    image_url = urljoin('https://tululu.org', img_relative_path)
+    image_url = urljoin(book_url, img_relative_path)
     genres = [genre.text for genre in soup.find(id='content').find('span', class_='d_book').find_all('a')]
     filename = f'{book_id}. {title.strip()}'
     comments = soup.find_all(class_='texts')
@@ -88,7 +88,7 @@ def get_book(book_id):
     response = get_response(book_url)
     check_for_redirect(response)
     soup = BeautifulSoup(response.text, 'lxml')
-    return soup
+    return soup, book_url
 
 
 def parse_book_ids():
@@ -105,8 +105,8 @@ def main():
     start_id, end_id = parse_book_ids()
     for book_num in range(start_id, end_id + 1):
         try:
-            soup = get_book(book_num)
-            book = parse_book_page(soup, book_num)
+            soup, book_url = get_book(book_num)
+            book = parse_book_page(soup, book_num, book_url)
             filename = book['filename']
             image_url = book['image_url']
             download_book(book_num, filename)
