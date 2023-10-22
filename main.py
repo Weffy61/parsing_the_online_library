@@ -20,7 +20,7 @@ def check_for_redirect(response):
 
 def download_book(book_id, filename, folder='books/'):
     payload = {
-        'id': book_id + 1
+        'id': book_id
     }
     download_url = f'https://tululu.org/txt.php'
     response_txt = get_response(download_url, payload=payload)
@@ -70,7 +70,7 @@ def parse_book_page(soup, book_id):
     img_relative_path = soup.find(class_='bookimage').find('img')['src']
     image_url = urljoin('https://tululu.org', img_relative_path)
     genres = [genre.text for genre in soup.find(id='content').find('span', class_='d_book').find_all('a')]
-    filename = f'{book_id + 1}. {title.strip()}'
+    filename = f'{book_id}. {title.strip()}'
 
     book = {
         'title': title.strip(),
@@ -83,7 +83,7 @@ def parse_book_page(soup, book_id):
 
 
 def get_book(book_id):
-    book_url = f"https://tululu.org/b{book_id + 1}/"
+    book_url = f"https://tululu.org/b{book_id}/"
     response = get_response(book_url)
     check_for_redirect(response)
     soup = BeautifulSoup(response.text, 'lxml')
@@ -95,14 +95,14 @@ def parse_book_ids():
         description='Загрузка книги в указанном диапазоне'
     )
     parser_book_id.add_argument('start_id', help='ID начальной книги', type=int, nargs='?', default=1)
-    parser_book_id.add_argument('end_id', help='ID конечной книги', type=int, nargs='?', default=10)
+    parser_book_id.add_argument('end_id', help='ID конечной книги', type=int, nargs='?', default=11)
     book_args = parser_book_id.parse_args()
     return book_args.start_id, book_args.end_id
 
 
 def main():
     start_id, end_id = parse_book_ids()
-    for book_num in range(start_id - 1, end_id):
+    for book_num in range(start_id, end_id):
         try:
             soup = get_book(book_num)
             book = parse_book_page(soup, book_num)
@@ -115,7 +115,7 @@ def main():
             print(f'Автор: {book["author"]}')
 
         except (requests.exceptions.HTTPError, requests.exceptions.MissingSchema) as ex:
-            print(f'Книга с id {book_num + 1} недоступна, так как {ex}')
+            print(f'Книга с id {book_num} недоступна, так как {ex}')
             continue
 
 
