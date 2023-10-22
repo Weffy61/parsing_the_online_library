@@ -46,9 +46,8 @@ def download_image(url, folder='images/'):
         file.write(response.content)
 
 
-def download_comments(soup, book_id, folder='comments/'):
+def download_comments(comments, book_id, folder='comments/'):
     os.makedirs(folder, exist_ok=True)
-    comments = soup.find_all(class_='texts')
     path = os.path.join(folder, f'{book_id}.txt')
     for comment in comments:
         book_comment = f"{comment.find(class_='black').text}\n"
@@ -71,13 +70,15 @@ def parse_book_page(soup, book_id):
     image_url = urljoin('https://tululu.org', img_relative_path)
     genres = [genre.text for genre in soup.find(id='content').find('span', class_='d_book').find_all('a')]
     filename = f'{book_id}. {title.strip()}'
+    comments = soup.find_all(class_='texts')
 
     book = {
         'title': title.strip(),
         'author': author.strip(),
         'image_url': image_url,
         'genres': genres,
-        'filename': filename
+        'filename': filename,
+        'comments': comments
     }
     return book
 
@@ -110,7 +111,7 @@ def main():
             image_url = book['image_url']
             download_book(book_num, filename)
             download_image(image_url)
-            download_comments(soup, book_num)
+            download_comments(book['comments'], book_num)
             print(f'Название: {book["title"]}')
             print(f'Автор: {book["author"]}')
 
