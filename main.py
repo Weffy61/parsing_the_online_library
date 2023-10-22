@@ -69,6 +69,7 @@ def parse_book_page(soup, book_id):
     title, author = soup.find('h1').text.split('::')
     img_relative_path = soup.find(class_='bookimage').find('img')['src']
     image_url = urljoin('https://tululu.org', img_relative_path)
+    print(image_url)
     genres = [genre.text for genre in soup.find(id='content').find('span', class_='d_book').find_all('a')]
     filename = f'{book_id}. {title.strip()}'
 
@@ -95,14 +96,14 @@ def parse_book_ids():
         description='Загрузка книги в указанном диапазоне'
     )
     parser_book_id.add_argument('start_id', help='ID начальной книги', type=int, nargs='?', default=1)
-    parser_book_id.add_argument('end_id', help='ID конечной книги', type=int, nargs='?', default=11)
+    parser_book_id.add_argument('end_id', help='ID конечной книги', type=int, nargs='?', default=10)
     book_args = parser_book_id.parse_args()
     return book_args.start_id, book_args.end_id
 
 
 def main():
     start_id, end_id = parse_book_ids()
-    for book_num in range(start_id, end_id):
+    for book_num in range(start_id, end_id + 1):
         try:
             soup = get_book(book_num)
             book = parse_book_page(soup, book_num)
