@@ -7,8 +7,8 @@ from urllib.parse import unquote, urlsplit
 import argparse
 
 
-def get_response(url):
-    response = requests.get(url, allow_redirects=True)
+def get_response(url, payload=None):
+    response = requests.get(url, allow_redirects=True, params=payload)
     response.raise_for_status()
     return response
 
@@ -18,9 +18,15 @@ def check_for_redirect(response):
         raise requests.HTTPError('выполнена переадресация со страницы книги')
 
 
-def download_book(url, filename, folder='books/'):
+def download_book(book_id, filename, folder='books/'):
+    payload = {
+        'id': book_id + 1
+    }
+    download_url = f'https://tululu.org/txt.php'
+    response_txt = get_response(download_url, payload=payload)
+    check_for_redirect(response_txt)
     os.makedirs(folder, exist_ok=True)
-    response = requests.get(url)
+    response = requests.get(download_url, params=payload)
     response.raise_for_status()
     normalized_filename = f'{sanitize_filename(filename)}.txt'
     path = os.path.join(folder, normalized_filename)
@@ -80,11 +86,8 @@ def get_book(book_id):
     book_url = f"https://tululu.org/b{book_id + 1}/"
     response = get_response(book_url)
     check_for_redirect(response)
-    download_url = f'https://tululu.org/txt.php?id={book_id + 1}'
-    response_txt = get_response(download_url)
-    check_for_redirect(response_txt)
     soup = BeautifulSoup(response.text, 'lxml')
-    return soup, download_url
+    return soup
 
 
 def parse_book_ids():
@@ -101,11 +104,11 @@ def main():
     start_id, end_id = parse_book_ids()
     for book_num in range(start_id - 1, end_id):
         try:
-            soup, download_url = get_book(book_num)
+            soup = get_book(book_num)
             book = parse_book_page(soup, book_num)
             filename = book['filename']
             image_url = book['image_url']
-            download_book(download_url, filename)
+            download_book(book_num, filename)
             download_image(image_url)
             download_comments(soup, book_num)
             print(f'Название: {book["title"]}')
