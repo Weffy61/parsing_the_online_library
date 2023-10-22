@@ -37,8 +37,9 @@ def download_book(book_id, filename, folder='books/'):
 
 def download_image(url, folder='images/'):
     os.makedirs(folder, exist_ok=True)
-    response = requests.get(url)
+    response = get_response(url)
     response.raise_for_status()
+    check_for_redirect(response)
     filename = unquote(urlsplit(url).path).split('/')[-1]
     normalized_filename = f'{sanitize_filename(filename)}'
     path = os.path.join(folder, normalized_filename)
@@ -69,7 +70,6 @@ def parse_book_page(soup, book_id):
     title, author = soup.find('h1').text.split('::')
     img_relative_path = soup.find(class_='bookimage').find('img')['src']
     image_url = urljoin('https://tululu.org', img_relative_path)
-    print(image_url)
     genres = [genre.text for genre in soup.find(id='content').find('span', class_='d_book').find_all('a')]
     filename = f'{book_id}. {title.strip()}'
 
