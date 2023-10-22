@@ -115,7 +115,8 @@ def main():
             print(f'Название: {book["title"]}')
             print(f'Автор: {book["author"]}')
 
-        except (requests.exceptions.HTTPError, requests.exceptions.MissingSchema) as ex:
+        except (requests.exceptions.HTTPError, requests.exceptions.MissingSchema,
+                requests.exceptions.ConnectionError) as ex:
             print(f'Книга с id {book_num} недоступна, так как {ex}')
             continue
 
