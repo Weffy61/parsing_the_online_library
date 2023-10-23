@@ -83,12 +83,11 @@ def parse_book_page(soup, book_id, book_url):
     return book
 
 
-def get_book(book_id):
-    book_url = f"https://tululu.org/b{book_id}/"
+def get_book(book_url):
     response = get_response(book_url)
     check_for_redirect(response)
     soup = BeautifulSoup(response.text, 'lxml')
-    return soup, book_url
+    return soup
 
 
 def parse_book_ids():
@@ -105,7 +104,8 @@ def main():
     start_id, end_id = parse_book_ids()
     for book_num in range(start_id, end_id + 1):
         try:
-            soup, book_url = get_book(book_num)
+            book_url = f"https://tululu.org/b{book_num}/"
+            soup = get_book(book_url)
             book = parse_book_page(soup, book_num, book_url)
             filename = book['filename']
             image_url = book['image_url']
