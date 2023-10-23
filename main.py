@@ -8,12 +8,6 @@ from urllib.parse import unquote, urlsplit
 import argparse
 
 
-def get_response(url, payload=None):
-    response = requests.get(url, allow_redirects=True, params=payload)
-    response.raise_for_status()
-    return response
-
-
 def check_for_redirect(response):
     if response.history:
         raise requests.HTTPError('выполнена переадресация со страницы книги')
@@ -24,7 +18,7 @@ def download_book(book_id, filename, folder='books/'):
         'id': book_id
     }
     download_url = f'https://tululu.org/txt.php'
-    response = get_response(download_url, payload=payload)
+    response = requests.get(download_url, params=payload)
     response.raise_for_status()
     check_for_redirect(response)
     os.makedirs(folder, exist_ok=True)
@@ -37,7 +31,7 @@ def download_book(book_id, filename, folder='books/'):
 
 def download_image(url, folder='images/'):
     os.makedirs(folder, exist_ok=True)
-    response = get_response(url)
+    response = requests.get(url)
     response.raise_for_status()
     check_for_redirect(response)
     filename = unquote(urlsplit(url).path).split('/')[-1]
@@ -85,7 +79,7 @@ def parse_book_page(soup, book_id, book_url):
 
 
 def get_book(book_url):
-    response = get_response(book_url)
+    response = requests.get(book_url)
     check_for_redirect(response)
     soup = BeautifulSoup(response.text, 'lxml')
     return soup
