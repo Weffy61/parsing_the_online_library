@@ -1,3 +1,4 @@
+import time
 import requests
 import os
 from bs4 import BeautifulSoup
@@ -118,6 +119,7 @@ def main():
         except (requests.exceptions.HTTPError, requests.exceptions.MissingSchema,
                 requests.exceptions.ConnectionError) as ex:
             print(f'Книга с id {book_num} недоступна, так как {ex}')
+            time.sleep(5)
             continue
 
 
