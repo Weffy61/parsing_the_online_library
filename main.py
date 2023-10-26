@@ -108,6 +108,7 @@ def main():
             download_image(image_url)
             download_comments(book['comments'], book_num)
             print(f'Название: {book["title"]}')
+            print(f"Жанр(ы): {', '.join(map(str, book['genres']))}")
             print(f'Автор: {book["author"]}')
 
         except (requests.exceptions.HTTPError, requests.exceptions.MissingSchema,
