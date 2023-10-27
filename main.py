@@ -44,10 +44,13 @@ def download_image(url, folder='images/'):
 def download_comments(comments, book_id, folder='comments/'):
     os.makedirs(folder, exist_ok=True)
     path = os.path.join(folder, f'{book_id}.txt')
+    book_comments = []
     for comment in comments:
         book_comment = f"{comment.find(class_='black').text}\n"
-        with open(path, 'a') as file:
-            file.write(book_comment)
+        book_comments.append(book_comment)
+    if book_comments:
+        with open(path, 'w') as file:
+            file.writelines(book_comments)
 
 
 def parse_book_genre(response):
