@@ -53,15 +53,6 @@ def download_comments(comments, book_id, folder='comments/'):
             file.writelines(book_comments)
 
 
-def parse_book_genre(response):
-    soup = BeautifulSoup(response.text, 'lxml')
-    book_genres = []
-    genres = soup.find(id='content').find('span', class_='d_book').find_all('a')
-    for genre in genres:
-        book_genres.append(genre.text)
-    return book_genres
-
-
 def parse_book_page(soup, book_id, book_url):
     title, author = soup.find('h1').text.split('::')
     img_relative_path = soup.find(class_='bookimage').find('img')['src']
