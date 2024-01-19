@@ -22,9 +22,9 @@ def get_links(category_id, page_count):
         response = requests.get(urljoin(url, str(page)))
         response.raise_for_status()
         soup = BeautifulSoup(response.text, 'lxml')
-        books = soup.find_all(class_='d_book')
+        books = soup.select('.d_book')
         for link in books:
-            links.append(urljoin('https://tululu.org', link.find('a')['href']))
+            links.append(urljoin('https://tululu.org', link.select_one('a')['href']))
     return links
 
 
@@ -73,12 +73,12 @@ def download_image(url, folder='images/'):
 
 
 def parse_book_page(soup, book_id, book_url):
-    title, author = soup.find('h1').text.split('::')
-    img_relative_path = soup.find(class_='bookimage').find('img')['src']
+    title, author = soup.select_one('h1').text.split('::')
+    img_relative_path = soup.select_one('.bookimage img')['src']
     image_url = urljoin(book_url, img_relative_path)
-    genres = [genre.text for genre in soup.find(id='content').find('span', class_='d_book').find_all('a')]
+    genres = [genre.text for genre in soup.select('#content span.d_book a')]
     filename = f'{book_id}. {title.strip()}'
-    comments = [comment.find(class_='black').text for comment in soup.find_all(class_='texts')]
+    comments = [comment.text for comment in soup.select('.texts .black')]
 
     book = {
         'title': title.strip(),
@@ -89,6 +89,7 @@ def parse_book_page(soup, book_id, book_url):
         'genres': genres
 
     }
+
     return book, filename
 
 
@@ -102,15 +103,15 @@ def main():
         'Научная фантастика': 'l55'
     }
     books = []
-    total_links = get_links(category.get('Научная фантастика'), 4)
-    for book_num, book_url in enumerate(total_links):
+    total_links = get_links(category.get('Научная фантастика'), 1)
+    for book_url in total_links:
         book_id = unquote(urlsplit(book_url).path).split('/')[1].lstrip('b')
         try:
             soup = get_book(book_url)
             book, filename = parse_book_page(soup, book_id, book_url)
             books.append(book)
             image_url = book.get('image_src')
-            download_book(book_num, filename)
+            download_book(book_id, filename)
             download_image(image_url)
             download_comments(book.get('comments'), book_id)
         except (requests.exceptions.HTTPError, requests.exceptions.MissingSchema,
