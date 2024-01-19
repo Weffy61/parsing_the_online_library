@@ -1,11 +1,33 @@
+import argparse
 import json
 import os
 import time
+from typing import NamedTuple
 from urllib.parse import urljoin, urlsplit, unquote
 
 import requests
 from bs4 import BeautifulSoup
 from pathvalidate import sanitize_filename
+
+
+class BooksParser(NamedTuple):
+    start_page: int
+    end_page: int
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description='Загрузка книг в указанном диапазоне'
+    )
+    parser.add_argument('-sp', '--start_page', help='Стартовая страница', type=int, default=699)
+    parser.add_argument('-ep', '--end_page', help='Последняя страница', type=int)
+
+    args = parser.parse_args()
+    book_args = BooksParser(
+        start_page=args.start_page,
+        end_page=args.end_page + 1
+    )
+    return book_args
 
 
 def get_book(book_url):
@@ -15,10 +37,19 @@ def get_book(book_url):
     return soup
 
 
-def get_links(category_id, page_count):
+def get_last_page(category_id):
+    url = f'https://tululu.org/{category_id}/'
+    response = requests.get(url)
+    response.raise_for_status()
+    soup = BeautifulSoup(response.text, 'lxml')
+    last_page = int(soup.select('#content .npage')[-1].text)
+    return last_page + 1
+
+
+def get_links(category_id, start_page, end_page):
     url = f'https://tululu.org/{category_id}/'
     links = []
-    for page in range(page_count + 1):
+    for page in range(start_page, end_page):
         response = requests.get(urljoin(url, str(page)))
         response.raise_for_status()
         soup = BeautifulSoup(response.text, 'lxml')
@@ -103,7 +134,13 @@ def main():
         'Научная фантастика': 'l55'
     }
     books = []
-    total_links = get_links(category.get('Научная фантастика'), 1)
+    book_args = parse_args()
+    last_page = get_last_page(category.get('Научная фантастика'))
+    total_links = get_links(
+        category_id=category.get('Научная фантастика'),
+        start_page=book_args.start_page,
+        end_page=book_args.end_page if book_args.end_page else last_page
+    )
     for book_url in total_links:
         book_id = unquote(urlsplit(book_url).path).split('/')[1].lstrip('b')
         try:
