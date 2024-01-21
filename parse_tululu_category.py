@@ -2,6 +2,7 @@ import argparse
 import json
 import os
 import time
+from pathlib import Path
 from typing import NamedTuple
 from urllib.parse import urljoin, urlsplit, unquote
 
@@ -13,19 +14,29 @@ from pathvalidate import sanitize_filename
 class BooksParser(NamedTuple):
     start_page: int
     end_page: int
+    dest_folder: str
+    skip_img: bool
+    skip_txt: bool
 
 
 def parse_args():
+
     parser = argparse.ArgumentParser(
         description='Загрузка книг в указанном диапазоне'
     )
-    parser.add_argument('-sp', '--start_page', help='Стартовая страница', type=int, default=699)
-    parser.add_argument('-ep', '--end_page', help='Последняя страница', type=int)
+    parser.add_argument('-s', '--start_page', help='Стартовая страница', type=int, default=700)
+    parser.add_argument('-e', '--end_page', help='Последняя страница', type=int, default=701)
+    parser.add_argument('-df', '--dest_folder', help='Каталог загрузки', default=Path.cwd())
+    parser.add_argument('-i', '--skip_imgs', help='Не скачивать картинки',  action='store_true')
+    parser.add_argument('-t', '--skip_txt', help='Не скачивать книги',  action='store_true')
 
     args = parser.parse_args()
     book_args = BooksParser(
         start_page=args.start_page,
-        end_page=args.end_page + 1
+        end_page=args.end_page + 1,
+        dest_folder=args.dest_folder,
+        skip_img=args.skip_imgs,
+        skip_txt=args.skip_txt
     )
     return book_args
 
@@ -64,9 +75,10 @@ def check_for_redirect(response):
         raise requests.HTTPError('выполнена переадресация со страницы книги')
 
 
-def download_comments(comments, book_id, folder='comments/'):
-    os.makedirs(folder, exist_ok=True)
-    path = os.path.join(folder, f'{book_id}.txt')
+def download_comments(comments, book_id, dest_folder, folder='comments/'):
+    comments_folder = os.path.join(dest_folder, folder)
+    os.makedirs(comments_folder, exist_ok=True)
+    path = os.path.join(comments_folder, f'{book_id}.txt')
     book_comments = []
     for comment in comments:
         book_comments.append(comment)
@@ -75,7 +87,7 @@ def download_comments(comments, book_id, folder='comments/'):
             file.writelines(book_comments)
 
 
-def download_book(book_id, filename, folder='books/'):
+def download_book(book_id, filename, dest_folder, folder='books/'):
     payload = {
         'id': book_id
     }
@@ -83,22 +95,24 @@ def download_book(book_id, filename, folder='books/'):
     response = requests.get(download_url, params=payload)
     response.raise_for_status()
     check_for_redirect(response)
-    os.makedirs(folder, exist_ok=True)
+    book_folder = os.path.join(dest_folder, folder)
+    os.makedirs(book_folder, exist_ok=True)
     normalized_filename = f'{sanitize_filename(filename)}.txt'
-    path = os.path.join(folder, normalized_filename)
+    path = os.path.join(book_folder, normalized_filename)
     with open(path, 'wb') as file:
         file.write(response.content)
     return path
 
 
-def download_image(url, folder='images/'):
-    os.makedirs(folder, exist_ok=True)
+def download_image(url, dest_folder, folder='images/'):
     response = requests.get(url)
     response.raise_for_status()
     check_for_redirect(response)
+    image_folder = os.path.join(dest_folder, folder)
+    os.makedirs(image_folder, exist_ok=True)
     filename = unquote(urlsplit(url).path).split('/')[-1]
     normalized_filename = f'{sanitize_filename(filename)}'
-    path = os.path.join(folder, normalized_filename)
+    path = os.path.join(image_folder, normalized_filename)
     with open(path, 'wb') as file:
         file.write(response.content)
 
@@ -124,8 +138,9 @@ def parse_book_page(soup, book_id, book_url):
     return book, filename
 
 
-def write_json(file_path, books):
-    with open(file_path, 'w', encoding='utf-8') as file:
+def write_json(file_name, books, dest_folder):
+    json_path = os.path.join(dest_folder, file_name)
+    with open(json_path, 'w', encoding='utf-8') as file:
         json.dump(books, file, ensure_ascii=False, indent=2)
 
 
@@ -135,6 +150,7 @@ def main():
     }
     books = []
     book_args = parse_args()
+    dest_folder = book_args.dest_folder
     last_page = get_last_page(category.get('Научная фантастика'))
     total_links = get_links(
         category_id=category.get('Научная фантастика'),
@@ -146,17 +162,19 @@ def main():
         try:
             soup = get_book(book_url)
             book, filename = parse_book_page(soup, book_id, book_url)
-            books.append(book)
             image_url = book.get('image_src')
-            download_book(book_id, filename)
-            download_image(image_url)
-            download_comments(book.get('comments'), book_id)
+            if not book_args.skip_txt:
+                download_book(book_id, filename, dest_folder)
+            if not book_args.skip_img:
+                download_image(image_url, dest_folder)
+            download_comments(book.get('comments'), book_id, dest_folder)
+            books.append(book)
         except (requests.exceptions.HTTPError, requests.exceptions.MissingSchema,
                 requests.exceptions.ConnectionError) as ex:
             print(f'Книга с id {book_id} недоступна, так как {ex}')
             time.sleep(5)
             continue
-    write_json('books.json', books)
+    write_json('books.json', books, dest_folder)
 
 
 if __name__ == '__main__':
