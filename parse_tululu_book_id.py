@@ -74,6 +74,7 @@ def parse_book_page(soup, book_id, book_url):
 
 def get_book(book_url):
     response = requests.get(book_url)
+    response.raise_for_status()
     check_for_redirect(response)
     soup = BeautifulSoup(response.text, 'lxml')
     return soup
