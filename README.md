@@ -22,8 +22,10 @@ pip install -r requirements.txt
 
 ## Запуск
 
+### Парсинг книг по id
+
 ```commandline
-python main.py --start_id --end_id
+python parse_tululu_book_id.py --start_id --end_id
 ```
 
 Аргументы:  
@@ -34,7 +36,7 @@ python main.py --start_id --end_id
 Например:
 
 ```commandline
-python main.py 22 30
+python parse_tululu_book_id.py 22 30
 ```
 
 Данный пример, скачает книги в диапазоне от 22 до 30.
@@ -42,10 +44,40 @@ python main.py 22 30
 Также вы можете запустить скрипт без аргументов в ознакомитеном варианте:
 
 ```commandline
-python main.py
+python parse_tululu_book_id.py
 ```
 
 Таким образом вы скачаете книги в диапазоне от 1 до 10.
+
+### Парсинг книг по категориям
+
+```commandline
+python parse_tululu_category.py --start_page --end_page --dest_folder --skip_imgs --skip_txt
+```
+
+Аргументы:  
+Аргументы являются диапазоном номеров книг от и до.
+- --start_id - стартовая страница.
+- --end_id - конечная страница(включительно). По-умолчанию является последней страницей категории.
+- --dest_folder - каталог загрузки файлов.
+- --skip_imgs - пропуск изображений.
+- --skip_txt - пропуск книг.
+
+Например:
+
+```commandline
+python parse_tululu_category.py --start_page 20 --end_page 25 --dest_folder /opt/my-library/ --skip_imgs
+```
+
+Данный пример, скачает книги с 20 страницы по 25, загрузка произойдет в каталог `my-library`, обложки книг скачиваться 
+не будут.  
+Также вы можете запустить скрипт без аргументов в ознакомитеном варианте:
+
+```commandline
+python parse_tululu_category.py
+```
+
+Таким образом вы скачаете книги с 700 по 701 страницу.
 
 ## Цель проекта
 
