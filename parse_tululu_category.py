@@ -52,6 +52,7 @@ def get_last_page(category_id):
     url = f'https://tululu.org/{category_id}/'
     response = requests.get(url)
     response.raise_for_status()
+    check_for_redirect(response)
     soup = BeautifulSoup(response.text, 'lxml')
     last_page = int(soup.select('#content .npage')[-1].text)
     return last_page + 1
@@ -63,6 +64,7 @@ def get_links(category_id, start_page, end_page):
     for page in range(start_page, end_page):
         response = requests.get(urljoin(url, str(page)))
         response.raise_for_status()
+        check_for_redirect(response)
         soup = BeautifulSoup(response.text, 'lxml')
         books = soup.select('.d_book')
         for link in books:
