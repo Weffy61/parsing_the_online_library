@@ -48,21 +48,21 @@ def get_book(book_url):
     return soup
 
 
-def get_last_page():
+def get_last_page_num():
     url = urljoin('https://tululu.org/', 'l55')
     response = requests.get(url)
     response.raise_for_status()
     check_for_redirect(response)
     soup = BeautifulSoup(response.text, 'lxml')
-    last_page = int(soup.select('#content .npage')[-1].text)
-    return last_page + 1
+    last_page_num = int(soup.select('#content .npage')[-1].text)
+    return last_page_num + 1
 
 
 def get_links(start_page, end_page):
     url = urljoin('https://tululu.org/', 'l55')
     links = []
-    for page in range(start_page, end_page):
-        response = requests.get(urljoin(url, str(page)))
+    for page_num in range(start_page, end_page):
+        response = requests.get(urljoin(url, str(page_num)))
         response.raise_for_status()
         check_for_redirect(response)
         soup = BeautifulSoup(response.text, 'lxml')
@@ -150,10 +150,10 @@ def main():
     books = []
     book_args = parse_args()
     dest_folder = book_args.dest_folder
-    last_page = get_last_page()
+    last_page_num = get_last_page_num()
     total_links = get_links(
         start_page=book_args.start_page,
-        end_page=book_args.end_page if book_args.end_page else last_page
+        end_page=book_args.end_page if book_args.end_page else last_page_num
     )
     for book_url in total_links:
         book_id = unquote(urlsplit(book_url).path).split('/')[1].lstrip('b')
