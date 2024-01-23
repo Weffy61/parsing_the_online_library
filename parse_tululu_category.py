@@ -48,8 +48,8 @@ def get_book(book_url):
     return soup
 
 
-def get_last_page(category_id):
-    url = f'https://tululu.org/{category_id}/'
+def get_last_page():
+    url = urljoin('https://tululu.org/', 'l55')
     response = requests.get(url)
     response.raise_for_status()
     check_for_redirect(response)
@@ -58,8 +58,8 @@ def get_last_page(category_id):
     return last_page + 1
 
 
-def get_links(category_id, start_page, end_page):
-    url = f'https://tululu.org/{category_id}/'
+def get_links(start_page, end_page):
+    url = urljoin('https://tululu.org/', 'l55')
     links = []
     for page in range(start_page, end_page):
         response = requests.get(urljoin(url, str(page)))
@@ -147,15 +147,11 @@ def write_json(file_name, books, dest_folder):
 
 
 def main():
-    category = {
-        'Научная фантастика': 'l55'
-    }
     books = []
     book_args = parse_args()
     dest_folder = book_args.dest_folder
-    last_page = get_last_page(category.get('Научная фантастика'))
+    last_page = get_last_page()
     total_links = get_links(
-        category_id=category.get('Научная фантастика'),
         start_page=book_args.start_page,
         end_page=book_args.end_page if book_args.end_page else last_page
     )
