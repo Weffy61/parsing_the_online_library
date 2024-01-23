@@ -49,7 +49,7 @@ def get_book(book_url):
 
 
 def get_last_page_num():
-    url = urljoin('https://tululu.org/', 'l55')
+    url = urljoin('https://tululu.org', 'l55/')
     response = requests.get(url)
     response.raise_for_status()
     check_for_redirect(response)
@@ -59,7 +59,7 @@ def get_last_page_num():
 
 
 def get_links(start_page, end_page):
-    url = urljoin('https://tululu.org/', 'l55')
+    url = urljoin('https://tululu.org', 'l55/')
     links = []
     for page_num in range(start_page, end_page):
         response = requests.get(urljoin(url, str(page_num)))
@@ -68,7 +68,7 @@ def get_links(start_page, end_page):
         soup = BeautifulSoup(response.text, 'lxml')
         books = soup.select('.d_book')
         for link in books:
-            links.append(urljoin('https://tululu.org', link.select_one('a')['href']))
+            links.append(urljoin(url, link.select_one('a')['href']))
     return links
 
 
