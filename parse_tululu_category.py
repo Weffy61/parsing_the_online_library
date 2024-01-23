@@ -8,7 +8,8 @@ from urllib.parse import urljoin, urlsplit, unquote
 
 import requests
 from bs4 import BeautifulSoup
-from pathvalidate import sanitize_filename
+
+from parse_tululu_book_id import get_book, check_for_redirect, download_image, download_book
 
 
 class BooksParser(NamedTuple):
@@ -41,14 +42,6 @@ def parse_args():
     return book_args
 
 
-def get_book(book_url):
-    response = requests.get(book_url)
-    response.raise_for_status()
-    check_for_redirect(response)
-    soup = BeautifulSoup(response.text, 'lxml')
-    return soup
-
-
 def get_last_page_num():
     url = urljoin('https://tululu.org', 'l55/')
     response = requests.get(url)
@@ -71,11 +64,6 @@ def get_links(url, page_num):
     return links
 
 
-def check_for_redirect(response):
-    if response.history:
-        raise requests.HTTPError('выполнена переадресация со страницы книги')
-
-
 def download_comments(comments, book_id, dest_folder, folder='comments/'):
     comments_folder = os.path.join(dest_folder, folder)
     os.makedirs(comments_folder, exist_ok=True)
@@ -86,36 +74,6 @@ def download_comments(comments, book_id, dest_folder, folder='comments/'):
     if book_comments:
         with open(path, 'w') as file:
             file.writelines(book_comments)
-
-
-def download_book(book_id, filename, dest_folder, folder='books/'):
-    payload = {
-        'id': book_id
-    }
-    download_url = f'https://tululu.org/txt.php'
-    response = requests.get(download_url, params=payload)
-    response.raise_for_status()
-    check_for_redirect(response)
-    book_folder = os.path.join(dest_folder, folder)
-    os.makedirs(book_folder, exist_ok=True)
-    normalized_filename = f'{sanitize_filename(filename)}.txt'
-    path = os.path.join(book_folder, normalized_filename)
-    with open(path, 'wb') as file:
-        file.write(response.content)
-    return path
-
-
-def download_image(url, dest_folder, folder='images/'):
-    response = requests.get(url)
-    response.raise_for_status()
-    check_for_redirect(response)
-    image_folder = os.path.join(dest_folder, folder)
-    os.makedirs(image_folder, exist_ok=True)
-    filename = unquote(urlsplit(url).path).split('/')[-1]
-    normalized_filename = f'{sanitize_filename(filename)}'
-    path = os.path.join(image_folder, normalized_filename)
-    with open(path, 'wb') as file:
-        file.write(response.content)
 
 
 def parse_book_page(soup, book_id, book_url):
@@ -153,7 +111,7 @@ def main():
     category_url = urljoin('https://tululu.org', 'l55/')
     for page_num in range(
             book_args.start_page,
-            book_args.end_page if book_args.end_page else last_page_num):
+            book_args.end_page if book_args.end_page else last_page_num)[:1]:  # удалить срез
         try:
             total_links.extend(get_links(category_url, page_num))
         except (requests.exceptions.HTTPError, requests.exceptions.MissingSchema,
@@ -169,9 +127,14 @@ def main():
             book, filename = parse_book_page(soup, book_id, book_url)
             image_url = book.get('image_src')
             if not book_args.skip_txt:
-                download_book(book_id, filename, dest_folder)
+                download_book(
+                    book_id,
+                    filename,
+                    folder=os.path.join(dest_folder, 'books/'))
             if not book_args.skip_img:
-                download_image(image_url, dest_folder)
+                download_image(
+                    image_url,
+                    folder=os.path.join(dest_folder, 'images/'))
             download_comments(book.get('comments'), book_id, dest_folder)
             books.append(book)
         except (requests.exceptions.HTTPError, requests.exceptions.MissingSchema,
