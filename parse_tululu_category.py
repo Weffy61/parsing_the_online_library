@@ -43,6 +43,7 @@ def parse_args():
 
 def get_book(book_url):
     response = requests.get(book_url)
+    response.raise_for_status()
     check_for_redirect(response)
     soup = BeautifulSoup(response.text, 'lxml')
     return soup
@@ -58,17 +59,15 @@ def get_last_page_num():
     return last_page_num + 1
 
 
-def get_links(start_page, end_page):
-    url = urljoin('https://tululu.org', 'l55/')
+def get_links(url, page_num):
     links = []
-    for page_num in range(start_page, end_page):
-        response = requests.get(urljoin(url, str(page_num)))
-        response.raise_for_status()
-        check_for_redirect(response)
-        soup = BeautifulSoup(response.text, 'lxml')
-        books = soup.select('.d_book')
-        for link in books:
-            links.append(urljoin(url, link.select_one('a')['href']))
+    response = requests.get(urljoin(url, str(page_num)))
+    response.raise_for_status()
+    check_for_redirect(response)
+    soup = BeautifulSoup(response.text, 'lxml')
+    books = soup.select('.d_book')
+    for link in books:
+        links.append(urljoin(url, link.select_one('a')['href']))
     return links
 
 
@@ -136,7 +135,6 @@ def parse_book_page(soup, book_id, book_url):
         'genres': genres
 
     }
-
     return book, filename
 
 
@@ -151,10 +149,19 @@ def main():
     book_args = parse_args()
     dest_folder = book_args.dest_folder
     last_page_num = get_last_page_num()
-    total_links = get_links(
-        start_page=book_args.start_page,
-        end_page=book_args.end_page if book_args.end_page else last_page_num
-    )
+    total_links = []
+    category_url = urljoin('https://tululu.org', 'l55/')
+    for page_num in range(
+            book_args.start_page,
+            book_args.end_page if book_args.end_page else last_page_num):
+        try:
+            total_links.extend(get_links(category_url, page_num))
+        except (requests.exceptions.HTTPError, requests.exceptions.MissingSchema,
+                requests.exceptions.ConnectionError) as ex:
+            print(f'Страница {page_num} недоступна, так как {ex}')
+            time.sleep(5)
+            continue
+
     for book_url in total_links:
         book_id = unquote(urlsplit(book_url).path).split('/')[1].lstrip('b')
         try:
