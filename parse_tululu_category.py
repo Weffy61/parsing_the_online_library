@@ -9,7 +9,7 @@ from urllib.parse import urljoin, urlsplit, unquote
 import requests
 from bs4 import BeautifulSoup
 
-from parse_tululu_book_id import get_book, check_for_redirect, download_image, download_book
+from parse_tululu_book_id import get_book, check_for_redirect, download_image, download_book, parse_book_page
 
 
 class BooksParser(NamedTuple):
@@ -76,26 +76,6 @@ def download_comments(comments, book_id, dest_folder, folder='comments/'):
             file.writelines(book_comments)
 
 
-def parse_book_page(soup, book_id, book_url):
-    title, author = soup.select_one('h1').text.split('::')
-    img_relative_path = soup.select_one('.bookimage img')['src']
-    image_url = urljoin(book_url, img_relative_path)
-    genres = [genre.text for genre in soup.select('#content span.d_book a')]
-    filename = f'{book_id}. {title.strip()}'
-    comments = [comment.text for comment in soup.select('.texts .black')]
-
-    book = {
-        'title': title.strip(),
-        'author': author.strip(),
-        'image_src': image_url,
-        'book_path': os.path.join('books', filename),
-        'comments': comments,
-        'genres': genres
-
-    }
-    return book, filename
-
-
 def write_json(file_name, books, dest_folder):
     json_path = os.path.join(dest_folder, file_name)
     with open(json_path, 'w', encoding='utf-8') as file:
@@ -141,7 +121,7 @@ def main():
         except (requests.exceptions.HTTPError, requests.exceptions.MissingSchema,
                 requests.exceptions.ConnectionError) as ex:
             print(f'Книга с id {book_id} недоступна, так как {ex}')
-            time.sleep(5)
+            # time.sleep(5)
             continue
     write_json('books.json', books, dest_folder)
 
