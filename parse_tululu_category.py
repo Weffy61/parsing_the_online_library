@@ -106,12 +106,13 @@ def main():
     books = []
     book_args = parse_args()
     dest_folder = book_args.dest_folder
-    last_page_num = get_last_page_num()
+    if book_args.end_page:
+        last_page_num = book_args.end_page
+    else:
+        last_page_num = get_last_page_num()
     total_links = []
     category_url = urljoin('https://tululu.org', 'l55/')
-    for page_num in range(
-            book_args.start_page,
-            book_args.end_page if book_args.end_page else last_page_num)[:1]:  # удалить срез
+    for page_num in range(book_args.start_page, last_page_num):
         try:
             total_links.extend(get_links(category_url, page_num))
         except (requests.exceptions.HTTPError, requests.exceptions.MissingSchema,
