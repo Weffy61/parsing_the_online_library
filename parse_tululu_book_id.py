@@ -46,30 +46,30 @@ def download_comments(comments, book_id, folder='comments/'):
     path = os.path.join(folder, f'{book_id}.txt')
     book_comments = []
     for comment in comments:
-        book_comment = f"{comment.find(class_='black').text}\n"
-        book_comments.append(book_comment)
+        book_comments.append(comment)
     if book_comments:
         with open(path, 'w') as file:
             file.writelines(book_comments)
 
 
 def parse_book_page(soup, book_id, book_url):
-    title, author = soup.find('h1').text.split('::')
-    img_relative_path = soup.find(class_='bookimage').find('img')['src']
+    title, author = soup.select_one('h1').text.split('::')
+    img_relative_path = soup.select_one('.bookimage img')['src']
     image_url = urljoin(book_url, img_relative_path)
-    genres = [genre.text for genre in soup.find(id='content').find('span', class_='d_book').find_all('a')]
+    genres = [genre.text for genre in soup.select('#content span.d_book a')]
     filename = f'{book_id}. {title.strip()}'
-    comments = soup.find_all(class_='texts')
+    comments = [comment.text for comment in soup.select('.texts .black')]
 
     book = {
         'title': title.strip(),
         'author': author.strip(),
-        'image_url': image_url,
+        'image_src': image_url,
         'genres': genres,
-        'filename': filename,
+        'book_path': os.path.join('books', filename),
         'comments': comments
     }
-    return book
+
+    return book, filename
 
 
 def get_book(book_url):
@@ -96,14 +96,13 @@ def main():
         try:
             book_url = f"https://tululu.org/b{book_num}/"
             soup = get_book(book_url)
-            book = parse_book_page(soup, book_num, book_url)
-            filename = book['filename']
-            image_url = book['image_url']
+            book, filename = parse_book_page(soup, book_num, book_url)
+            image_url = book['image_src']
             download_book(book_num, filename)
             download_image(image_url)
             download_comments(book['comments'], book_num)
             print(f'Название: {book["title"]}')
-            print(f"Жанр(ы): {', '.join(map(str, book['genres']))}")
+            print(f"Жанр(ы): {book['genres']}")
             print(f'Автор: {book["author"]}')
 
         except (requests.exceptions.HTTPError, requests.exceptions.MissingSchema,
