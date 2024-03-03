@@ -18,7 +18,8 @@ def on_reload():
         {
             'title': book.get('title'),
             'author': book.get('author'),
-            'image_src': book.get('image_src')
+            'image_src': book.get('image_src'),
+            'book_path': book.get('book_path')
 
         } for book
         in books]
