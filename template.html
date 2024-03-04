@@ -16,9 +16,9 @@
     <nav aria-label="Page navigation" class="px-1">
         <ul class="pagination">
             <li class="page-item"><a class="page-link" href="#">Previous</a></li>
-            <li class="page-item"><a class="page-link" href="#">1</a></li>
-            <li class="page-item"><a class="page-link" href="#">2</a></li>
-            <li class="page-item"><a class="page-link" href="#">3</a></li>
+            {% for page_num in range(context[0].page_count) %}
+                <li class="page-item"><a class="page-link" href="/pages/index{{ page_num + 1 }}.html">{{ page_num + 1 }}</a></li>
+            {% endfor %}
             <li class="page-item"><a class="page-link" href="#">Next</a></li>
         </ul>
     </nav>

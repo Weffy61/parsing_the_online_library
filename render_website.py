@@ -1,5 +1,6 @@
 import json
 import os
+from math import ceil
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from livereload import Server
@@ -14,15 +15,19 @@ def on_reload():
     template = env.get_template('template.html')
 
     with open('books.json', 'r') as file:
-        pages = chunked(json.load(file), 10)
+        pages = json.load(file)
     os.makedirs('pages', exist_ok=True)
-    for page_num, books in enumerate(pages):
+    page_count = ceil(len(pages) / 10)
+
+    for page_num, books in enumerate(chunked(pages, 10)):
         context = [
             {
                 'title': book.get('title'),
                 'author': book.get('author'),
                 'image_src': book.get('image_src'),
-                'book_path': book.get('book_path')
+                'book_path': book.get('book_path'),
+                'page_num': page_num + 1,
+                'page_count': page_count
             } for book
             in books]
 
