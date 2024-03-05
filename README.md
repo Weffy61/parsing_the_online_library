@@ -28,10 +28,10 @@ pip install -r requirements.txt
 python parse_tululu_book_id.py --start_id --end_id
 ```
 
-Аргументы:  
+Аргументы:
 Аргументы являются диапазоном номеров книг от и до.
 - --start_id - начальный номер.
-- --end_id - конечный номер(включительно).  
+- --end_id - конечный номер(включительно).
 
 Например:
 
@@ -55,7 +55,7 @@ python parse_tululu_book_id.py
 python parse_tululu_category.py --start_page --end_page --dest_folder --skip_imgs --skip_txt
 ```
 
-Аргументы:  
+Аргументы:
 Аргументы являются диапазоном номеров книг от и до.
 - --start_id - стартовая страница.
 - --end_id - конечная страница(включительно). По-умолчанию является последней страницей категории.
@@ -69,8 +69,8 @@ python parse_tululu_category.py --start_page --end_page --dest_folder --skip_img
 python parse_tululu_category.py --start_page 20 --end_page 25 --dest_folder /opt/my-library/ --skip_imgs
 ```
 
-Данный пример, скачает книги с 20 страницы по 25, загрузка произойдет в каталог `my-library`, обложки книг скачиваться 
-не будут.  
+Данный пример, скачает книги с 20 страницы по 25, загрузка произойдет в каталог `my-library`, обложки книг скачиваться
+не будут.
 Также вы можете запустить скрипт без аргументов в ознакомитеном варианте:
 
 ```commandline
@@ -79,6 +79,17 @@ python parse_tululu_category.py
 
 Таким образом вы скачаете книги с 700 по 701 страницу.
 
+### Генерация шаблонов
+
+Для того, чтобы сгенерировать свои html шаблоны:
+
+```shell
+python3 render_website.py
+```
+
+Страницы сайта будут скачаны в каталог `pages`, расположенный в корневой директории.
+
+Пример сайта: https://weffy61.github.io/parsing_the_online_library/
 ## Цель проекта
 
 Код написан в образовательных целях на онлайн-курсе для веб-разработчиков [dvmn.org](https://dvmn.org/).
