@@ -17,9 +17,9 @@ def on_reload():
     with open('books.json', 'r') as file:
         pages = json.load(file)
     os.makedirs('pages', exist_ok=True)
-    page_count = ceil(len(pages) / 10)
+    page_count = ceil(len(pages) / 20)
 
-    for page_num, books in enumerate(chunked(pages, 10)):
+    for page_num, books in enumerate(chunked(pages, 20)):
         context = [
             {
                 'title': book.get('title'),
