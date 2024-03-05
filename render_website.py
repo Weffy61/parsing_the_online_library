@@ -26,6 +26,7 @@ def on_reload():
                 'author': book.get('author'),
                 'image_src': book.get('image_src'),
                 'book_path': book.get('book_path'),
+                'genres': book.get('genres'),
                 'page_num': page_num + 1,
                 'page_count': page_count
             } for book

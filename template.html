@@ -51,6 +51,12 @@
               <div class="card-body">
                 <h5 class="card-title">{{book.title}}</h5>
                 <p class="card-text">{{ book.author }}</p>
+                <div class="genres_wrapper">
+                  {% for genre in book.genres %}
+                    <span class="badge badge-light" style="background-color: #D3D3D3; color: black; font-size: 12px; margin: 2px 0;">{{ genre }}</span>
+                  {% endfor %}
+                </div>
+                <p></p>
                 <a href="../{{ book.book_path|urlencode}}.txt" target="_blank">Читать</a>
               </div>
             </div>
